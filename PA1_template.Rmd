@@ -4,22 +4,126 @@ output:
   html_document:
     keep_md: true
 ---
+## Introduction
+```{r setoptions,echo=FALSE}
+library(knitr)
+opts_chunk$set(echo = TRUE, results = "asis")
+```
 
 
 ## Loading and preprocessing the data
 
+```{r loaddata}
+require(lubridate)
 
+#colClasses = c('numeric', 'character','character')
+# TODO fix choice on colClasses
+colClasses = c('numeric', 'character','numeric')
+activityDf <- read.csv('activity.csv', header = TRUE, colClasses = colClasses)
+activityDf$interval <- as.factor(activityDf$interval)
+#activityDf$datetime <- ymd_hm(paste(activityDf$date," ",activityDf$interval %/% 100,':', activityDf$interval %% 100))
+# TODO fix choice on colClasses
+activityDf$datetime <- ymd_hm(paste(activityDf$date," ",as.numeric(activityDf$interval) %/% 100,':', as.numeric(activityDf$interval) %% 100))
+
+```
 
 ## What is mean total number of steps taken per day?
+```{r}
+require(lattice)
+require(dplyr)
 
+#TODO Choose between next 2
+dailysteps <- summarise(group_by(activityDf, date), sum(steps, na.rm = TRUE))
+histogram(dailysteps[[2]], type='count', xlab='Steps per Day',main='Histogram of Steps per Day', ylab='Number of Days', nint=30 )
+#alternate
+dailysteps <- aggregate(steps ~ date, data=activityDf, sum)
+histogram(dailysteps[[2]], type='count', xlab='Steps per Day',main='Histogram of Steps per Day', ylab='Number of Days', nint=30 )
+################################
+
+meansteps <- mean(dailysteps[[2]])
+mediansteps <- median(dailysteps[[2]])
+print(meansteps)
+print(mediansteps)
+```
 
 
 ## What is the average daily activity pattern?
-
-
+```{r}
+activityDf$interval <- as.factor(activityDf$interval)
+activityDf$dayofwk <- wday(activityDf$date, label=TRUE)
+dailyactivityDf <- summarise(group_by(activityDf, dayofwk, interval), mean(steps, na.rm = TRUE))
+names(dailyactivityDf) <- c('dayofwk','Interval','Avg_Steps')
+## TODO alternate assignment of dailyactivityDf using aggregate
+dailyactivityDf <- aggregate(steps ~ dayofwk + interval, data = activityDf, mean)
+names(dailyactivityDf) <- c('dayofwk','Interval','Avg_Steps')
+#xyplot(Avg_Steps ~ Time| dayofwk, data = dailyactivityDf, layout = c(1,7), type='l', ylab='Mean Steps per Interval', xlab='Time Interval')
+xyplot(Avg_Steps ~ Interval| 
+       dayofwk, 
+       data = dailyactivityDf, 
+       layout = c(1,7), 
+       type='l', 
+       ylab='Mean Steps per Interval', 
+       xlab='Interval',
+       scales = list(
+		     x = list(
+			      at=seq(0, 287, by=24),
+			      labels=seq(0, 2300, by=200)
+			      )
+		     )
+       )
+```
+################################################################################
 
 ## Imputing missing values
+```{r}
+number_NAs <- sum(is.na(activityDf$steps))
+print(number_NAs)
 
+activityDf_noNAs <- activityDf
+for (i in 1:nrow(activityDf_noNAs)) {
+	if (is.na(activityDf_noNAs[i,"steps"])){
+		dy <- activityDf_noNAs[i,"dayofwk"]
+		inv <- activityDf_noNAs[i,"interval"]
+		# TODO alt average
+		day_avg <- aggregate(Avg_Steps~dayofwk,data = dailyactivityDf,mean)
+		avg_alt <- day_avg[day_avg$dayofwk == dy,"Avg_Steps"]
+		###
+		avg_per_int_day <- filter(dailyactivityDf, 
+					  dayofwk==dy, 
+					  Interval==inv)[1,"Avg_Steps"]
+		activityDf_noNAs[i,"steps"] <- avg_per_int_day
+	}
+}
+
+# Same procedure as prior histogram
+dailysteps_noNAs <- aggregate(steps ~ date, data=activityDf_noNAs, sum)
+histogram(dailysteps_noNAs[[2]], type='count', xlab='Steps per Day',main='Histogram of Steps per Day', ylab='Number of Days', nint=30 )
+meansteps_noNAs<- mean(dailysteps_noNAs[[2]])
+mediansteps_noNAs <- median(dailysteps_noNAs[[2]])
+print(meansteps_noNAs)
+print(mediansteps_noNAs)
+
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+activityDf_noNAs$daytype <- ifelse(is.element(activityDf_noNAs$dayofwk,c('Sat','Sun')),'weekend','weekday')
+# TODO below needs new dataset
+activity_bydaytype <- aggregate(steps ~ daytype + interval, data = activityDf_noNAs, mean)
+names(activity_bydaytype) <- c("Day_Type","Interval","Avg_Steps")
+xyplot(Avg_Steps ~ Interval| 
+       Day_Type, 
+       data = activity_bydaytype, 
+       layout = c(1,2), 
+       type='l', 
+       ylab='Number of steps', 
+       xlab='Interval',
+       scales = list(
+		     x = list(
+			      at=seq(0, 287, by=24),
+			      labels=seq(0, 2300, by=200)
+			      )
+		     )
+       )
+```
