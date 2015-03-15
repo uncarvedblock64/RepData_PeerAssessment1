@@ -1,5 +1,7 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
+author: "Brian Morge"
+date: "March 15, 2015"
 output: 
   html_document:
     keep_md: true
@@ -11,7 +13,7 @@ output:
 ```r
 library(knitr)
 # Set knitr options for the remainder of the document
-opts_chunk$set(echo = TRUE, results = "asis")
+opts_chunk$set(echo = TRUE, results = "markup")
 ```
 
 ## Loading and preprocessing the data
@@ -41,14 +43,18 @@ meansteps <- mean(dailysteps[[2]])
 print(meansteps)
 ```
 
-[1] 10766.19
+```
+## [1] 10766.19
+```
 
 ```r
 mediansteps <- median(dailysteps[[2]])
 print(mediansteps)
 ```
 
-[1] 10765
+```
+## [1] 10765
+```
 
 ## What is the average daily activity pattern?
 Activity begins around 6:00 ramping up to a daytime high between 9:00 and 10:00.
@@ -84,14 +90,18 @@ peakinterval <- dailyactivityDf[max(dailyactivityDf[,"steps"])
 print(peakinterval[,"interval"])
 ```
 
-[1] 835
-288 Levels: 0 5 10 15 20 25 30 35 40 45 50 55 100 105 110 115 120 ... 2355
+```
+## [1] 835
+## 288 Levels: 0 5 10 15 20 25 30 35 40 45 50 55 100 105 110 115 120 ... 2355
+```
 
 ```r
 print(peakinterval[,"steps"])
 ```
 
-[1] 206.1698
+```
+## [1] 206.1698
+```
 
 ## Imputing missing values
 Create a duplicate data frame and imput the average by the missing interval over
@@ -102,7 +112,9 @@ number_NAs <- sum(is.na(activityDf$steps))
 print(number_NAs)
 ```
 
-[1] 2304
+```
+## [1] 2304
+```
 
 ```r
 activityDf_noNAs <- activityDf
@@ -120,7 +132,9 @@ for (i in 1:nrow(activityDf_noNAs)) {
 print(sum(is.na(activityDf_noNAs$steps)))
 ```
 
-[1] 0
+```
+## [1] 0
+```
 
 ```r
 # Same procedure as prior histogram
@@ -138,14 +152,18 @@ meansteps_noNAs<- mean(dailysteps_noNAs[[2]])
 print(meansteps_noNAs)
 ```
 
-[1] 10766.19
+```
+## [1] 10766.19
+```
 
 ```r
 mediansteps_noNAs <- median(dailysteps_noNAs[[2]])
 print(mediansteps_noNAs)
 ```
 
-[1] 10766.19
+```
+## [1] 10766.19
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
